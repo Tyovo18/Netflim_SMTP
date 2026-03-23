@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Création de compte</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans&display=swap" rel="stylesheet" />
+  </head>
+  <body style="font-family: 'Nunito Sans', sans-serif; padding: 20px; background-color: #f7f7f7;">
+    <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+      <h2 style="color: #333333;">Création de compte</h2>
+      <p style="color: #555555;">Bonjour {{ username }},</p>
+      <p style="color: #555555;">
+        Votre compte a été créé avec succès. Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse e-mail et activer votre compte :
+      </p>
+      <p style="color: #555555;">
+        <a href="{{verificationLink}}" style="color: #007bff; text-decoration: none;">Vérifier mon adresse e-mail</a>
+      </p>
+      <p style="color: #555555;">Merci,<br />L'équipe Netflim</p>
+    </div>
+  </body>
+</html>
