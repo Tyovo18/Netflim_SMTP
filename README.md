@@ -1,4 +1,4 @@
-# Netflim_AUTH – Microservice d’authentification
+# Netflim_SMTP – Microservice SMTP
 
 ## Table des matières
 1. [Vue d’ensemble](#vue-densemble)
@@ -17,8 +17,8 @@
 
 ## Vue d’ensemble
 
-**Netflim AUTH** est le microservice d’authentification pour la plateforme Netflim.  
-Il gère la création d’utilisateurs, l’authentification via JWT, et l’envoi d’e-mails (alert-login, alert-signin, reset-password).  
+**Netflim SMTP** est le microservice d’envoi d’e-mails pour la plateforme Netflim.  
+Il gère l’envoi d’e-mails via SMTP pour les alertes (login, création de compte, réinitialisation de mot de passe).  
 
 **Informations clés :**
 - **Version :** 1.0.0
@@ -39,8 +39,8 @@ Il gère la création d’utilisateurs, l’authentification via JWT, et l’env
 
 ### Installation
 ```bash
-git clone https://github.com/Tyovo18/Netflim_AUTH.git
-cd Netflim_AUTH
+git clone https://github.com/Tyovo18/Netflim_SMTP.git
+cd Netflim_SMTP
 npm install
 ````
 
@@ -59,12 +59,6 @@ DB_NAME=
 DB_USER=
 DB_PASSWORD=
 
-# JWT
-JWT_SECRET=<your_jwt_secret_key>
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=<your_refresh_secret_key>
-JWT_REFRESH_EXPIRES_IN=7d
-
 # Service Auth Token
 AUTH_SERVICE_TOKEN=token-connexion
 
@@ -79,7 +73,7 @@ SMTP_SERVICE_TOKEN=mailtrap_token_12345
 ### Base de données
 
 ```sql
-CREATE DATABASE netflim_auth;
+CREATE DATABASE netflim_smtp;
 ```
 
 > Décommentez `await sequelize.sync({ alter: true });` dans `database.js` la première fois pour créer les tables.
@@ -106,15 +100,15 @@ Swagger : `http://localhost:4000/api-docs`
 ```
 src/
 ├─ config/        # DB, env, swagger
-├─ controllers/   # auth, user, email
+├─ controllers/   # email
 ├─ middlewares/   # service-auth
-├─ models/        # user
-├─ repositories/  # user
-├─ routes/        # auth, user, email
-├─ services/      # auth, user, mailer
+├─ models/        # (si nécessaire)
+├─ repositories/  # (si nécessaire)
+├─ routes/        # email
+├─ services/      # mailer
 ├─ templates/     # emails
-├─ utils/         # jwt, axios, mailer, password, template-engine
-├─ validators/
+├─ utils/         # axios, mailer, template-engine
+├─ validators/    # email
 ├─ app.js
 └─ server.js
 ```
@@ -122,15 +116,13 @@ src/
 ### Architecture en couches
 
 ```
-Routes → Controllers → Services → Base de données / SMTP → Services externes
+Routes → Controllers → Services → SMTP → Services externes
 ```
 
 ---
 
 ## Authentification
 
-* **JWT Bearer Token** : pour routes protégées
-  Header : `Authorization: Bearer <JWT>`
 * **Service Token** : pour communication inter-service
   Header : `x-service-token: <AUTH_SERVICE_TOKEN>`
 
@@ -140,14 +132,6 @@ Routes → Controllers → Services → Base de données / SMTP → Services ext
 
 | Méthode | Endpoint                 | Description                     |
 | ------- | ------------------------ | ------------------------------- |
-| POST    | /auth/register           | Créer un nouvel utilisateur     |
-| POST    | /auth/login              | Connexion utilisateur           |
-| GET     | /auth/verify             | Vérifier JWT                    |
-| POST    | /users                   | Créer un utilisateur (Admin)    |
-| GET     | /users                   | Récupérer tous les utilisateurs |
-| GET     | /users/{id}              | Récupérer un utilisateur        |
-| PUT     | /users/{id}              | Mettre à jour un utilisateur    |
-| DELETE  | /users/{id}              | Supprimer un utilisateur        |
 | POST    | /api/mail/alert-login    | Envoyer alerte login            |
 | POST    | /api/mail/alert-signin   | Envoyer mail création compte    |
 | POST    | /api/mail/reset-password | Envoyer mail réinitialisation   |
@@ -156,76 +140,57 @@ Routes → Controllers → Services → Base de données / SMTP → Services ext
 
 ## Modèles de données
 
-### User
+### EmailRequest
 
 ```json
 {
-  "id": "uuid",
-  "username": "emi_lim",
-  "email": "emi@gmail.com",
-  "createdAt": "2026-02-10T12:00:00Z"
+  "to": "user@example.com",
+  "subject": "Alerte de connexion",
+  "body": "Contenu de l'e-mail"
 }
 ```
 
-### AuthResponse
+### EmailResponse
 
 ```json
 {
-  "user": { "id": "uuid", "username": "emi_lim", "email": "emi@gmail.com" },
-  "accessToken": "jwt_token_here"
-}
-```
-
-### VerifyResponse
-
-```json
-{
-  "valid": true,
-  "user": { "id": "uuid", "username": "emi_lim", "email": "emi@gmail.com" }
+  "success": true,
+  "message": "E-mail envoyé avec succès"
 }
 ```
 
 ### ErrorResponse
 
 ```json
-{ "message": "Token invalide ou mot de passe incorrect" }
+{ "message": "Erreur lors de l'envoi de l'e-mail" }
 ```
 
 ---
 
 ## Exemples d’utilisation
 
-**Créer un utilisateur (Admin)**
-
-```bash
-curl -X POST http://localhost:4000/users \
-  -H "Authorization: Bearer YOUR_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"emi_lim","email":"emi@gmail.com","password":"SecurePass456"}'
-```
-
-**Connexion utilisateur**
-
-```bash
-curl -X POST http://localhost:4000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"identifier":"emi@gmail.com","password":"MySecurePass123"}'
-```
-
 **Envoyer alerte login**
 
 ```bash
 curl -X POST http://localhost:4000/api/mail/alert-login \
   -H "Content-Type: application/json" \
-  -d '{"to":"emi@gmail.com"}'
+  -d '{"to":"user@example.com"}'
 ```
 
-**Vérifier JWT**
+**Envoyer alerte création de compte**
 
 ```bash
-curl -X GET http://localhost:4000/auth/verify \
-  -H "Authorization: Bearer YOUR_JWT" \
-  -H "x-service-token: token-connexion"
+curl -X POST http://localhost:4000/api/mail/alert-signin \
+  -H "Content-Type: application/json" \
+  -d '{"to":"user@example.com"}'
+```
+
+**Envoyer mail de réinitialisation**
+
+```bash
+curl -X POST http://localhost:4000/api/mail/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{"to":"user@example.com"}'
 ```
 
 ---
@@ -240,41 +205,40 @@ curl -X GET http://localhost:4000/auth/verify \
 | 401  | Unauthorized | Token invalide ou manquant             |
 | 403  | Forbidden    | Service token invalide                 |
 | 404  | Not Found    | Ressource inexistante                  |
-| 409  | Conflict     | Conflit (email/username déjà existant) |
+| 409  | Conflict     | Conflit (email déjà existant)          |
 | 500  | Server Error | Erreur serveur                         |
 
 ---
 
 ## Cas d’erreur courants
 
-**401 – Token invalide**
+**400 – Données invalides**
 
 ```json
-{ "message": "Token invalide ou mot de passe incorrect" }
+{ "message": "Adresse e-mail invalide" }
 ```
 
-**404 – Utilisateur non trouvé**
+**403 – Service token invalide**
 
 ```json
-{ "message": "Utilisateur introuvable" }
+{ "message": "Token de service non autorisé" }
 ```
 
 ---
 
 ## Bonnes pratiques
 
-1. Toujours utiliser JWT pour routes protégées
-2. Valider les données côté client
-3. Ne jamais exposer secrets (`JWT_SECRET`, `SMTP_PASS`)
-4. Respecter formats email et mot de passe
-5. Garder services modulaires (auth, users, mail)
+1. Valider les adresses e-mail côté client
+2. Ne jamais exposer les informations SMTP (`SMTP_PASS`)
+3. Respecter les formats d’e-mail
+4. Garder les services modulaires (mailer, templates)
 
 ---
 
 ## Support et contact
 
-* GitHub : [https://github.com/Tyovo18/Netflim_AUTH](https://github.com/Tyovo18/Netflim_AUTH)
-* Issues : [https://github.com/Tyovo18/Netflim_AUTH/issues](https://github.com/Tyovo18/Netflim_AUTH/issues)
+* GitHub : [https://github.com/Tyovo18/Netflim_SMTP](https://github.com/Tyovo18/Netflim_SMTP)
+* Issues : [https://github.com/Tyovo18/Netflim_SMTP/issues](https://github.com/Tyovo18/Netflim_SMTP/issues)
 * Swagger : `http://localhost:4000/api-docs`
 
 
