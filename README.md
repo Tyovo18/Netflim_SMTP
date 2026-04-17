@@ -235,10 +235,40 @@ curl -X POST http://localhost:4000/api/mail/reset-password \
 
 ---
 
+## Configuration SMTP
+
+### Avec Gmail (production)
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=votre.email@gmail.com
+SMTP_PASS=votre_mot_de_passe_application
+```
+
+Activer la validation en deux étapes sur votre compte Google, puis générer un **mot de passe d'application** sur https://myaccount.google.com/apppasswords.
+
+### Avec Mailtrap (tests)
+
+```env
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USER=<user_mailtrap>
+SMTP_PASS=<pass_mailtrap>
+```
+
+Créer un compte sur https://mailtrap.io, récupérer les credentials dans votre inbox de test.
+
+## Notes importantes
+
+- Le port par défaut est **4005**
+- Ce service est appelé **automatiquement** par AUTH lors du register et du login
+- Les routes ne nécessitent pas de JWT, elles sont protégées par `AUTH_SERVICE_TOKEN`
+
 ## Support et contact
 
 * GitHub : [https://github.com/Tyovo18/Netflim_SMTP](https://github.com/Tyovo18/Netflim_SMTP)
 * Issues : [https://github.com/Tyovo18/Netflim_SMTP/issues](https://github.com/Tyovo18/Netflim_SMTP/issues)
-* Swagger : `http://localhost:4000/api-docs`
+* Swagger : `http://localhost:4005/api-docs`
 
 
